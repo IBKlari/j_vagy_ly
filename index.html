@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J vagy LY? – játékos gyakorló</title>
+  <style>
+    body {
+      font-family: "Comic Sans MS", "Trebuchet MS", sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #fff7a8, #c9f2ff);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: min(900px, 92vw);
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 25px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #5b3fc4;
+    }
+
+    .word {
+      font-size: 48px;
+      margin: 30px 0;
+      letter-spacing: 3px;
+      background: #fff5cc;
+      padding: 20px;
+      border-radius: 20px;
+      border: 4px dashed #ffb347;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-size: 22px;
+      padding: 15px 25px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .jbtn {
+      background: #70a1ff;
+      color: white;
+    }
+
+    .lybtn {
+      background: #c16bff;
+      color: white;
+    }
+
+    .next {
+      background: #7ee8c6;
+      margin-top: 15px;
+    }
+
+    .feedback {
+      margin-top: 20px;
+      font-size: 20px;
+      min-height: 30px;
+    }
+
+    .scoreboard {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 10px;
+      font-size: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .stars {
+      font-size: 26px;
+      margin-top: 10px;
+      min-height: 32px;
+    }
+
+    .levelselect {
+      margin-bottom: 20px;
+    }
+
+    .levelselect button {
+      font-size: 16px;
+      padding: 8px 14px;
+      margin: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .word {
+        font-size: 34px;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+
+    <h1>J vagy LY? 🌈</h1>
+    <p>Segíts megtalálni a helyes betűt!</p>
+
+    <div class="levelselect">
+      Nehézség:
+      <button onclick="setLevel(1)">könnyű</button>
+      <button onclick="setLevel(2)">közepes</button>
+      <button onclick="setLevel(3)">nehéz</button>
+    </div>
+
+    <div class="scoreboard">
+      <div>Pont: <span id="score">0</span></div>
+      <div>Feladat: <span id="counter">1</span></div>
+      <div>Összesen: <span id="total">0</span></div>
+    </div>
+
+    <div class="word" id="word"></div>
+
+    <div class="buttons">
+      <button class="jbtn" onclick="answer('j')">J</button>
+      <button class="lybtn" onclick="answer('ly')">LY</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <button class="next" onclick="nextQuestion()">Következő</button>
+
+    <div class="stars" id="stars"></div>
+
+  </div>
+</div>
+
+<script>
+  const easy = [
+    { w: "ha__ó", a: "j", s: "hajó" },
+    { w: "go__ó", a: "ly", s: "golyó" },
+    { w: "fo__ó", a: "ly", s: "folyó" },
+    { w: "va__on", a: "j", s: "vajon" },
+    { w: "ta__ték", a: "j", s: "tajték" }
+  ];
+
+  const medium = [
+    { w: "osztá__", a: "ly", s: "osztály" },
+    { w: "mi__en", a: "ly", s: "milyen" },
+    { w: "me__ik", a: "ly", s: "melyik" },
+    { w: "sü__ed", a: "ly", s: "süllyed" },
+    { w: "papagá__", a: "j", s: "papagáj" }
+  ];
+
+  const hard = [
+    { w: "rejté__", a: "ly", s: "rejtély" },
+    { w: "sze__em", a: "ly", s: "selyem" },
+    { w: "ka__la", a: "j", s: "kajla" },
+    { w: "gu__ás", a: "ly", s: "gulyás" },
+    { w: "ba__usz", a: "j", s: "bajusz" }
+  ];
+
+  let questions = [];
+  let index = 0;
+  let score = 0;
+  let answered = false;
+
+  function shuffle(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function setLevel(level) {
+    if (level === 1) questions = shuffle(easy);
+    if (level === 2) questions = shuffle([...easy, ...medium]);
+    if (level === 3) questions = shuffle([...easy, ...medium, ...hard]);
+    start();
+  }
+
+  function start() {
+    index = 0;
+    score = 0;
+    answered = false;
+    document.getElementById("score").innerText = score;
+    document.getElementById("total").innerText = questions.length;
+    show();
+  }
+
+  function show() {
+    answered = false;
+    const q = questions[index];
+    document.getElementById("word").innerText = q.w;
+    document.getElementById("counter").innerText = index + 1;
+    document.getElementById("feedback").innerText = "";
+    updateStars();
+  }
+
+  function answer(choice) {
+    if (answered) return;
+    answered = true;
+
+    const q = questions[index];
+
+    if (choice === q.a) {
+      score += 10;
+      document.getElementById("feedback").innerText = "Ügyes! ✔ A helyes szó: " + q.s;
+      playSound(true);
+    } else {
+      document.getElementById("feedback").innerText = "Nem ez volt. A helyes szó: " + q.s;
+      playSound(false);
+    }
+
+    document.getElementById("score").innerText = score;
+    updateStars();
+  }
+
+  function nextQuestion() {
+    if (index < questions.length - 1) {
+      index++;
+      show();
+    } else {
+      finish();
+    }
+  }
+
+  function finish() {
+    let msg = "Szép munka!";
+
+    if (score >= questions.length * 10 * 0.8) {
+      msg = "Helyesírás bajnok vagy! 🏆";
+    } else if (score < questions.length * 10 * 0.4) {
+      msg = "Gyakorolj még egy kicsit!";
+    }
+
+    alert(msg + " Pont: " + score);
+    questions = shuffle(questions);
+    start();
+  }
+
+  function updateStars() {
+    let stars = "";
+    let count = Math.floor(score / 30);
+    for (let i = 0; i < count; i++) {
+      stars += "⭐";
+    }
+    document.getElementById("stars").innerText = stars;
+  }
+
+  function playSound(good) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const ctx = new AudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    o.connect(g);
+    g.connect(ctx.destination);
+
+    o.frequency.value = good ? 700 : 200;
+    o.type = "sine";
+    g.gain.setValueAtTime(0.2, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.3);
+
+    o.start();
+    o.stop(ctx.currentTime + 0.3);
+  }
+
+  setLevel(2);
+</script>
+
+</body>
+</html>
